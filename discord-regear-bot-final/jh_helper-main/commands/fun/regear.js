@@ -1,44 +1,39 @@
-const { SlashCommandBuilder } = require('discord.js');
-
-const TIER_ROLES = {
-  T8: '1332344637972680714', // T8補裝
-  T9: '1332344706717188147'  // T9補裝
-};
+const {
+  SlashCommandBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  ActionRowBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+} = require('discord.js');
+const { getRecentDeaths } = require('../../utils/deathsFetcher');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('regear')
-    .setDescription('補裝申請指令'),
+    .setDescription('申請補裝流程'),
 
   async execute(interaction) {
-    const member = interaction.member;
+    const userId = interaction.user.id;
+    const deaths = await getRecentDeaths(userId, 10);
 
-    if (!member || !member.roles) {
-      return interaction.reply({
-        content: '⚠️ 無法讀取使用者角色資料。',
-        ephemeral: true
-      });
+    if (!deaths || deaths.length === 0) {
+      return interaction.reply({ content: '找不到死亡紀錄。', ephemeral: true });
     }
 
-    // 依照身分組確認 T8 或 T9 補裝
-    let tier = null;
-    if (member.roles.cache.has(TIER_ROLES.T8)) {
-      tier = 'T8';
-    } else if (member.roles.cache.has(TIER_ROLES.T9)) {
-      tier = 'T9';
-    }
+    const options = deaths.map((death, index) => new StringSelectMenuOptionBuilder()
+      .setLabel(`${death.TimeStamp.split('T')[0]} - ${death.Victim.Name}`)
+      .setDescription(`地點: ${death.Location} | 擊殺者: ${death.Killer?.Name || '未知'}`)
+      .setValue(`death_${index}`)
+    );
 
-    if (!tier) {
-      return interaction.reply({
-        content: '❌ 你沒有補裝身分組，請確認你是否擁有 T8 或 T9 補裝角色。',
-        ephemeral: true
-      });
-    }
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId('select_death_record')
+      .setPlaceholder('請選擇一筆死亡紀錄')
+      .addOptions(options);
 
-    // ✅ 如果進入這裡，就代表有對應身分組了
-    return interaction.reply({
-      content: `✅ 補裝確認成功，你的補裝等級為 **${tier}**！`,
-      ephemeral: false
-    });
-  }
+    const row = new ActionRowBuilder().addComponents(selectMenu);
+    await interaction.reply({ content: '請選擇要補裝的死亡紀錄：', components: [row], ephemeral: true });
+  },
 };
