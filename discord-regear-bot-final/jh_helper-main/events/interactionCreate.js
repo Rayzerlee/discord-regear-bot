@@ -7,7 +7,7 @@ module.exports = {
   async execute(interaction) {
     if (!interaction.isChatInputCommand() && !interaction.isStringSelectMenu() && !interaction.isModalSubmit()) return;
 
-    // 指令執行
+    // 指令處理
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
       if (!command) return;
@@ -19,7 +19,7 @@ module.exports = {
       }
     }
 
-    // 死亡紀錄選單互動
+    // 選單互動
     if (interaction.isStringSelectMenu() && interaction.customId === 'select_death_record') {
       const modal = new ModalBuilder()
         .setCustomId(`regear_modal_${interaction.values[0]}`)
@@ -52,7 +52,7 @@ module.exports = {
       await interaction.showModal(modal);
     }
 
-    // Modal 表單送出
+    // Modal 提交
     if (interaction.isModalSubmit() && interaction.customId.startsWith('regear_modal_')) {
       const deathId = interaction.customId.replace('regear_modal_', '');
       const deathTime = interaction.fields.getTextInputValue('death_time');
@@ -60,9 +60,10 @@ module.exports = {
       const content = interaction.fields.getTextInputValue('content');
 
       await interaction.reply({
-        content: `補裝資料已提交：\n- 死亡紀錄ID: ${deathId}\n- 時間: ${deathTime}\n- Caller: ${caller}\n- 內容: ${content}`,
+        content: `補裝資料已提交：\\n- 死亡紀錄ID: ${deathId}\\n- 時間: ${deathTime}\\n- Caller: ${caller}\\n- 內容: ${content}`,
         ephemeral: true,
       });
     }
   },
 };
+
