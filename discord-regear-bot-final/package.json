@@ -1,12 +1,11 @@
 {
   "name": "discord-regear-bot",
   "version": "1.0.0",
-  "description": "Albion 補裝 Discord 機器人",
+  "description": "Albion Online 補裝 Discord 機器人",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "build": "node commands"
+    "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.13.0",
