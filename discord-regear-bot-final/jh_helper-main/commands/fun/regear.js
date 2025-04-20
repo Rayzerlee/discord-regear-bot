@@ -7,7 +7,7 @@ const {
   TextInputBuilder,
   TextInputStyle,
 } = require('discord.js');
-const { getRecentDeaths } = require('../../utils/deathsFetcher');
+const { getRecentDeaths } = require('./deathsFetcher');
 
 module.exports = {
   data: new SlashCommandBuilder()
