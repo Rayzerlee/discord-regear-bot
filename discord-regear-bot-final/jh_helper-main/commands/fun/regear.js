@@ -9,7 +9,7 @@ import {
 } from 'discord.js';
 import fetch from 'node-fetch';
 import { google } from 'googleapis';
-import credentials from '../../virus-457405-4dd9633ef8bd.json' assert { type: "json" };
+import credentials from '../../../virus-457405-4dd9633ef8bd.json' assert { type: 'json' };
 
 const API_BASE = 'https://gameinfo-sgp.albiononline.com/api/gameinfo';
 const SPREADSHEET_ID = '1Ec3tJ1eRn692foIM7QUfOy2RYenH_IWOsPuj8E6AV5c';
@@ -90,15 +90,23 @@ export async function execute(interaction) {
 }
 
 export async function handleModal(interaction) {
-  const deathTime = interaction.fields.getTextInputValue('death_time');
-  const caller = interaction.fields.getTextInputValue('caller');
-  const content = interaction.fields.getTextInputValue('content');
-
-  const [_, index, albionId] = interaction.customId.match(/regear_modal_(\d+)\|(.*)/) || [];
-  const deaths = interaction.client._regearTemp?.[interaction.user.id];
-  const playerName = deaths?.[index]?.Victim?.Name || '未知';
-
   try {
+    const deathTime = interaction.fields.getTextInputValue('death_time');
+    const caller = interaction.fields.getTextInputValue('caller');
+    const content = interaction.fields.getTextInputValue('content');
+
+    const match = interaction.customId.match(/regear_modal_(\d+)\|(.*)/);
+    if (!match) {
+      return await interaction.reply({
+        content: '❌ 表單識別錯誤，請重新操作。',
+        ephemeral: true,
+      });
+    }
+
+    const [_, index, albionId] = match;
+    const deaths = interaction.client._regearTemp?.[interaction.user.id];
+    const playerName = deaths?.[index]?.Victim?.Name || '未知';
+
     await appendRegearRecord({
       time: deathTime,
       playerName,
@@ -112,10 +120,10 @@ export async function handleModal(interaction) {
       ephemeral: true,
     });
   } catch (err) {
-    console.error('❌ Google Sheets 寫入失敗', err);
-    if (!interaction.replied) {
+    console.error('❌ Modal Submit 發生錯誤：', err);
+    if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
-        content: '❌ 無法寫入試算表，請稍後再試。',
+        content: '❌ 發生錯誤，補裝申請未送出，請稍後再試。',
         ephemeral: true,
       });
     }
