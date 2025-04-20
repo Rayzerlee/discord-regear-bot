@@ -6,40 +6,44 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 幫助取得 __dirname（因 ESM 沒有）
+// 幫助 ESM 環境取得 __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
 
-// 載入 commands/fun/*.js
-const commandsPath = path.join(__dirname, 'commands/fun');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+// ✅ 載入指令：改為從 jh_helper-main/commands/fun 讀取
+const commandsPath = path.join(__dirname, 'jh_helper-main/commands/fun');
+if (fs.existsSync(commandsPath)) {
+  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = await import(`file://${filePath}`);
-  if (command.default?.data && command.default?.execute) {
-    client.commands.set(command.default.data.name, command.default);
-  } else if (command.data && command.execute) {
-    client.commands.set(command.data.name, command);
-  } else {
-    console.warn(`⚠️ 無效指令：${file}`);
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = await import(`file://${filePath}`);
+    const c = command.default || command;
+    if (c.data && c.execute) {
+      client.commands.set(c.data.name, c);
+    }
   }
+} else {
+  console.warn('⚠️ 找不到指令資料夾 jh_helper-main/commands/fun');
 }
 
-// 載入 events/*.js
+// ✅ 載入事件
 const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
-
-for (const file of eventFiles) {
-  const filePath = path.join(eventsPath, file);
-  const event = await import(`file://${filePath}`);
-  const e = event.default || event;
-  if (e.name && e.execute) {
-    client.on(e.name, (...args) => e.execute(...args));
+if (fs.existsSync(eventsPath)) {
+  const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+  for (const file of eventFiles) {
+    const filePath = path.join(eventsPath, file);
+    const event = await import(`file://${filePath}`);
+    const e = event.default || event;
+    if (e.name && e.execute) {
+      client.on(e.name, (...args) => e.execute(...args));
+    }
   }
 }
+
+client.login(process.env.TOKEN);
 
 client.login(process.env.TOKEN);
