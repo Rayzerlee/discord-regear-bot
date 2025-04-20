@@ -19,26 +19,32 @@ module.exports = {
   async execute(interaction) {
     const playerName = interaction.options.getString('name');
 
-    // ✅ 一開始就延遲回應，避免 Discord 判定超時
+    // ✅ 延遲回應避免 Discord 超時
     await interaction.deferReply({ ephemeral: true });
 
-    // 第一步：透過名稱查詢 UUID
+    // 查詢玩家 ID
     const searchUrl = `https://gameinfo.albiononline.com/api/gameinfo/search?q=${encodeURIComponent(playerName)}`;
     const searchRes = await fetch(searchUrl);
     if (!searchRes.ok) {
-      return interaction.editReply({ content: '找不到玩家，請確認名字是否正確。' });
+      return interaction.editReply({ content: '查詢失敗，請稍後再試。' });
     }
 
     const searchData = await searchRes.json();
-    const player = searchData.players?.find(p => p.Name.toLowerCase() === playerName.toLowerCase());
+    const player = searchData.players?.[0];
 
     if (!player) {
-      return interaction.editReply({ content: '找不到該玩家，請確認名稱拼寫。' });
+      return interaction.editReply({ content: `找不到玩家「${playerName}」，請確認拼寫。` });
+    }
+
+    if (player.Name.toLowerCase() !== playerName.toLowerCase()) {
+      return interaction.editReply({
+        content: `⚠️ 找不到精確名稱為「${playerName}」的玩家，但找到相近名稱：「${player.Name}」，請確認後再試一次。`
+      });
     }
 
     const albionId = player.Id;
 
-    // 第二步：用 UUID 查死亡紀錄
+    // 查詢死亡紀錄
     const deathsUrl = `https://gameinfo.albiononline.com/api/gameinfo/players/${albionId}/deaths`;
     const deathsRes = await fetch(deathsUrl);
     if (!deathsRes.ok) {
@@ -53,20 +59,4 @@ module.exports = {
     }
 
     const options = deaths.map((death, index) => new StringSelectMenuOptionBuilder()
-      .setLabel(`${death.TimeStamp.split('T')[0]} - ${death.Victim.Name}`)
-      .setDescription(`地點: ${death.Location} | 擊殺者: ${death.Killer?.Name || '未知'}`)
-      .setValue(`death_${index}|${albionId}`)
-    );
-
-    const selectMenu = new StringSelectMenuBuilder()
-      .setCustomId('select_death_record')
-      .setPlaceholder('請選擇要補裝的死亡紀錄')
-      .addOptions(options);
-
-    const row = new ActionRowBuilder().addComponents(selectMenu);
-    await interaction.editReply({ content: '請選擇要補裝的死亡紀錄：', components: [row] });
-
-    interaction.client._regearTemp = interaction.client._regearTemp || {};
-    interaction.client._regearTemp[interaction.user.id] = deaths;
-  },
-};
+      .setLabel(`${death.TimeStamp.split('T')[0]} - ${death.V
