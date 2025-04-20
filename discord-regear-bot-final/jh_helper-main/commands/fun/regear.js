@@ -44,12 +44,14 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
   const playerName = interaction.options.getString('name');
-  await interaction.deferReply({ ephemeral: true });
 
   try {
+    await interaction.deferReply({ ephemeral: true });
+
     const searchRes = await fetch(`${API_BASE}/search?q=${encodeURIComponent(playerName)}`);
     const searchData = await searchRes.json();
     const player = searchData.players?.[0];
+
     if (!player) {
       return interaction.editReply({ content: `❌ 找不到名稱為「${playerName}」的玩家。` });
     }
@@ -59,8 +61,8 @@ export async function execute(interaction) {
     const deathData = await deathsRes.json();
     const deaths = deathData.slice(0, 10);
 
-    if (deaths.length === 0) {
-      return interaction.editReply({ content: '這位玩家目前沒有死亡紀錄。' });
+    if (!deaths.length) {
+      return interaction.editReply({ content: '⚠️ 該玩家沒有死亡紀錄。' });
     }
 
     const options = deaths.map((death, index) =>
@@ -84,8 +86,12 @@ export async function execute(interaction) {
     interaction.client._regearTemp = interaction.client._regearTemp || {};
     interaction.client._regearTemp[interaction.user.id] = deaths;
   } catch (err) {
-    console.error('[regear 錯誤]', err);
-    return interaction.editReply({ content: '❌ 查詢失敗，請稍後再試或檢查名稱拼寫。' });
+    console.error('[/regear 錯誤]', err);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: '❌ 發生錯誤，請稍後再試。', ephemeral: true });
+    } else {
+      await interaction.editReply({ content: '❌ 發生錯誤，請稍後再試。' });
+    }
   }
 }
 
