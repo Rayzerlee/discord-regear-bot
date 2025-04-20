@@ -49,6 +49,9 @@ client.on('interactionCreate', async interaction => {
 });
 
 // 🟢 登入機器人
+console.log("🔍 DISCORD_TOKEN 存在？", !!process.env.DISCORD_TOKEN);
+console.log("🔍 Token 長度：", process.env.DISCORD_TOKEN?.length);
+
 client.login(token);
 
 
