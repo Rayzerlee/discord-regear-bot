@@ -6,11 +6,10 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  Events,
 } = require('discord.js');
 const fetch = require('node-fetch');
 const { google } = require('googleapis');
-const credentials = require('../../virus-457405-4dd9633ef8bd.json'); // 放在根目錄或 config
+const credentials = require('../../virus-457405-4dd9633ef8bd.json'); // 改成你的憑證 json 路徑
 
 const API_BASE = 'https://gameinfo-sgp.albiononline.com/api/gameinfo';
 const SPREADSHEET_ID = '1Ec3tJ1eRn692foIM7QUfOy2RYenH_IWOsPuj8E6AV5c';
@@ -84,7 +83,6 @@ module.exports = {
         .addOptions(options);
 
       const row = new ActionRowBuilder().addComponents(selectMenu);
-
       await interaction.editReply({
         content: '請選擇一筆死亡紀錄開始補裝流程：',
         components: [row],
