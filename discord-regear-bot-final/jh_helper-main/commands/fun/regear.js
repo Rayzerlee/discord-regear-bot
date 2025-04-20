@@ -3,9 +3,6 @@ const {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
 } = require('discord.js');
 const fetch = require('node-fetch');
 
@@ -22,18 +19,21 @@ module.exports = {
   async execute(interaction) {
     const playerName = interaction.options.getString('name');
 
+    // ✅ 一開始就延遲回應，避免 Discord 判定超時
+    await interaction.deferReply({ ephemeral: true });
+
     // 第一步：透過名稱查詢 UUID
     const searchUrl = `https://gameinfo.albiononline.com/api/gameinfo/search?q=${encodeURIComponent(playerName)}`;
     const searchRes = await fetch(searchUrl);
     if (!searchRes.ok) {
-      return interaction.reply({ content: '找不到玩家，請確認名字是否正確。', ephemeral: true });
+      return interaction.editReply({ content: '找不到玩家，請確認名字是否正確。' });
     }
 
     const searchData = await searchRes.json();
     const player = searchData.players?.find(p => p.Name.toLowerCase() === playerName.toLowerCase());
 
     if (!player) {
-      return interaction.reply({ content: '找不到該玩家，請確認名稱拼寫。', ephemeral: true });
+      return interaction.editReply({ content: '找不到該玩家，請確認名稱拼寫。' });
     }
 
     const albionId = player.Id;
@@ -42,14 +42,14 @@ module.exports = {
     const deathsUrl = `https://gameinfo.albiononline.com/api/gameinfo/players/${albionId}/deaths`;
     const deathsRes = await fetch(deathsUrl);
     if (!deathsRes.ok) {
-      return interaction.reply({ content: '取得死亡紀錄失敗。', ephemeral: true });
+      return interaction.editReply({ content: '取得死亡紀錄失敗。' });
     }
 
     const data = await deathsRes.json();
     const deaths = data.slice(0, 10);
 
     if (deaths.length === 0) {
-      return interaction.reply({ content: '這位玩家目前沒有死亡紀錄。', ephemeral: true });
+      return interaction.editReply({ content: '這位玩家目前沒有死亡紀錄。' });
     }
 
     const options = deaths.map((death, index) => new StringSelectMenuOptionBuilder()
@@ -64,7 +64,7 @@ module.exports = {
       .addOptions(options);
 
     const row = new ActionRowBuilder().addComponents(selectMenu);
-    await interaction.reply({ content: '請選擇要補裝的死亡紀錄：', components: [row], ephemeral: true });
+    await interaction.editReply({ content: '請選擇要補裝的死亡紀錄：', components: [row] });
 
     interaction.client._regearTemp = interaction.client._regearTemp || {};
     interaction.client._regearTemp[interaction.user.id] = deaths;
