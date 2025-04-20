@@ -20,12 +20,9 @@ module.exports = {
 
   async execute(interaction) {
     const playerName = interaction.options.getString('name');
-
-    // ✅ 延遲回應避免超時
     await interaction.deferReply({ ephemeral: true });
 
     try {
-      // 第一步：查詢名稱取得玩家 ID
       const searchRes = await fetch(`${API_BASE}/search?q=${encodeURIComponent(playerName)}`);
       if (!searchRes.ok) throw new Error('查詢失敗');
 
@@ -44,7 +41,6 @@ module.exports = {
 
       const albionId = player.Id;
 
-      // 第二步：抓取死亡紀錄
       const deathsRes = await fetch(`${API_BASE}/players/${albionId}/deaths`);
       if (!deathsRes.ok) throw new Error('查詢死亡紀錄失敗');
 
@@ -55,7 +51,6 @@ module.exports = {
         return interaction.editReply({ content: '此玩家在亞洲伺服器上沒有死亡紀錄。' });
       }
 
-      // 建立選單
       const options = deaths.map((death, index) =>
         new StringSelectMenuOptionBuilder()
           .setLabel(`${death.TimeStamp.split('T')[0]} - ${death.Victim.Name}`)
@@ -69,17 +64,15 @@ module.exports = {
         .addOptions(options);
 
       const row = new ActionRowBuilder().addComponents(selectMenu);
-
       await interaction.editReply({
         content: '請選擇一筆死亡紀錄開始補裝流程：',
         components: [row],
       });
 
-      // 暫存資料
       interaction.client._regearTemp = interaction.client._regearTemp || {};
       interaction.client._regearTemp[interaction.user.id] = deaths;
     } catch (err) {
-      console.error('[regear 指令錯誤]', err);
+      console.error('[regear 錯誤]', err);
       return interaction.editReply({ content: '❌ 查詢失敗，請稍後再試或檢查輸入是否正確。' });
     }
   },
