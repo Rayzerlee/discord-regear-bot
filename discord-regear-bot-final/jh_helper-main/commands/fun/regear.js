@@ -19,7 +19,7 @@ module.exports = {
   async execute(interaction) {
     const playerName = interaction.options.getString('name');
 
-    // ✅ 延遲回應避免 Discord 超時
+    // ✅ 回應延遲，避免 Discord 超時
     await interaction.deferReply({ ephemeral: true });
 
     // 查詢玩家 ID
@@ -58,5 +58,25 @@ module.exports = {
       return interaction.editReply({ content: '這位玩家目前沒有死亡紀錄。' });
     }
 
-    const options = deaths.map((death, index) => new StringSelectMenuOptionBuilder()
-      .setLabel(`${death.TimeStamp.split('T')[0]} - ${death.V
+    const options = deaths.map((death, index) =>
+      new StringSelectMenuOptionBuilder()
+        .setLabel(`${death.TimeStamp.split('T')[0]} - ${death.Victim.Name}`)
+        .setDescription(`地點: ${death.Location} | 擊殺者: ${death.Killer?.Name || '未知'}`)
+        .setValue(`death_${index}|${albionId}`)
+    );
+
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId('select_death_record')
+      .setPlaceholder('請選擇要補裝的死亡紀錄')
+      .addOptions(options);
+
+    const row = new ActionRowBuilder().addComponents(selectMenu);
+    await interaction.editReply({
+      content: '請選擇要補裝的死亡紀錄：',
+      components: [row]
+    });
+
+    interaction.client._regearTemp = interaction.client._regearTemp || {};
+    interaction.client._regearTemp[interaction.user.id] = deaths;
+  },
+};
