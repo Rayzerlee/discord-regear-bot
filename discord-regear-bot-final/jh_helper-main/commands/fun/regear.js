@@ -7,9 +7,12 @@ const {
   TextInputBuilder,
   TextInputStyle,
 } = require('discord.js');
-const fetch = require('node-fetch');
+
 const { google } = require('googleapis');
 const credentials = require('../../../virus-457405-4dd9633ef8bd.json');
+
+// ✅ 使用 dynamic import 支援 node-fetch (ESM)
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const API_BASE = 'https://gameinfo-sgp.albiononline.com/api/gameinfo';
 const SPREADSHEET_ID = '1Ec3tJ1eRn692foIM7QUfOy2RYenH_IWOsPuj8E6AV5c';
