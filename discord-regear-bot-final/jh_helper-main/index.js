@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, GatewayIntentBits } = require('discord.js');
 
+// ✅ 從環境變數讀取 token
 const token = process.env.DISCORD_TOKEN;
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -10,6 +11,7 @@ client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
+// 🔁 載入所有指令
 for (const folder of commandFolders) {
   const commandsPath = path.join(foldersPath, folder);
   const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
@@ -19,34 +21,36 @@ for (const folder of commandFolders) {
     if ('data' in command && 'execute' in command) {
       client.commands.set(command.data.name, command);
     } else {
-      console.log(`[WARNING] The command at ${filePath} is missing "data" or "execute".`);
+      console.log(`[WARNING] 指令缺少必要屬性: ${filePath}`);
     }
   }
 }
 
 client.once('ready', () => {
-  console.log(`✅ Bot is ready! Logged in as ${client.user.tag}`);
+  console.log(`✅ Bot 已上線！帳號：${client.user.tag}`);
 });
 
+// 🔥 處理 / 指令觸發
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
-
   if (!command) {
-    console.error(`No command matching ${interaction.commandName} was found.`);
+    console.error(`❌ 找不到對應指令：${interaction.commandName}`);
     return;
   }
 
   try {
     await command.execute(interaction);
   } catch (error) {
-    console.error(error);
-    await interaction.reply({ content: '❌ There was an error while executing this command!', ephemeral: true });
+    console.error(`❌ 指令執行錯誤：`, error);
+    await interaction.reply({ content: '⚠️ 執行指令時發生錯誤。', ephemeral: true });
   }
 });
 
+// 🟢 登入機器人
 client.login(token);
+
 
 
 
