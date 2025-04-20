@@ -17,7 +17,6 @@ module.exports = {
       !interaction.isModalSubmit()
     ) return;
 
-    // ✅ Slash 指令
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
       if (!command) return;
@@ -29,7 +28,6 @@ module.exports = {
       }
     }
 
-    // ✅ 下拉選單選擇死亡紀錄
     if (interaction.isStringSelectMenu() && interaction.customId === 'select_death_record') {
       const [selectedValue] = interaction.values;
       const [index, albionId] = selectedValue.split('|');
@@ -73,7 +71,6 @@ module.exports = {
       await interaction.showModal(modal);
     }
 
-    // ✅ Modal 表單送出，呼叫 regear 的 handleModal()
     if (interaction.isModalSubmit() && interaction.customId.startsWith('regear_modal_')) {
       const command = interaction.client.commands.get('regear');
       if (command && command.handleModal) {
