@@ -6,7 +6,6 @@ const {
   ActionRowBuilder,
 } = require('discord.js');
 const logger = require('../logger.js');
-const { appendRegearRecord } = require('../../sheetsWriter');
 require('dotenv').config();
 
 module.exports = {
@@ -18,6 +17,7 @@ module.exports = {
       !interaction.isModalSubmit()
     ) return;
 
+    // ✅ Slash 指令
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
       if (!command) return;
@@ -29,13 +29,14 @@ module.exports = {
       }
     }
 
+    // ✅ 下拉選單選擇死亡紀錄
     if (interaction.isStringSelectMenu() && interaction.customId === 'select_death_record') {
       const [selectedValue] = interaction.values;
       const [index, albionId] = selectedValue.split('|');
       const deaths = interaction.client._regearTemp?.[interaction.user.id];
 
       if (!deaths || !deaths[index]) {
-        return interaction.reply({ content: '紀錄已過期或錯誤，請重新使用指令。', ephemeral: true });
+        return interaction.reply({ content: '紀錄已過期或錯誤，請重新執行指令。', ephemeral: true });
       }
 
       const selectedDeath = deaths[index];
@@ -72,34 +73,16 @@ module.exports = {
       await interaction.showModal(modal);
     }
 
+    // ✅ Modal 表單送出，呼叫 regear 的 handleModal()
     if (interaction.isModalSubmit() && interaction.customId.startsWith('regear_modal_')) {
-      const deathTime = interaction.fields.getTextInputValue('death_time');
-      const caller = interaction.fields.getTextInputValue('caller');
-      const content = interaction.fields.getTextInputValue('content');
-
-      const [_, index, albionId] = interaction.customId.match(/regear_modal_(\\d+)\\|(.*)/) || [];
-      const deaths = interaction.client._regearTemp?.[interaction.user.id];
-      const playerName = deaths?.[index]?.Victim?.Name || '未知';
-
-      try {
-        await appendRegearRecord({
-          time: deathTime,
-          playerName,
-          caller,
-          content,
-          discordName: interaction.user.tag,
-        });
-
-        await interaction.reply({
-          content: `✅ 已成功提交補裝紀錄，感謝填寫！`,
-          ephemeral: true,
-        });
-      } catch (err) {
-        console.error('Google Sheets 寫入失敗', err);
-        await interaction.reply({
-          content: '❌ 寫入 Google 試算表時發生錯誤，請稍後再試。',
-          ephemeral: true,
-        });
+      const command = interaction.client.commands.get('regear');
+      if (command && command.handleModal) {
+        try {
+          await command.handleModal(interaction);
+        } catch (err) {
+          logger.error('補裝表單送出處理失敗：', err);
+          await interaction.reply({ content: '❌ 發生錯誤，請稍後再試。', ephemeral: true });
+        }
       }
     }
   },
